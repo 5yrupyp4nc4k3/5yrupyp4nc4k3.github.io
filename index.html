@@ -56,13 +56,8 @@ input[type=text] { padding:8px; border-radius:6px; border:1px solid #333; backgr
   </div>
 </div>
 
-<!-- Background music -->
-<audio id="bgMusic" src="track1.mp3" loop autoplay></audio>
-
 <script>
 const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
-const bgMusic = document.getElementById('bgMusic');
-
 function resize(){ canvas.width=innerWidth; canvas.height=innerHeight; } 
 window.addEventListener('resize',resize); resize();
 
@@ -72,13 +67,10 @@ canvas.addEventListener('mousedown', ()=>mouseDown=true);
 canvas.addEventListener('mouseup', ()=>mouseDown=false);
 
 const keys={};
-window.addEventListener('keydown', e=>{
-    keys[e.key.toLowerCase()]=true;
-    if(e.key.toLowerCase()==='p') togglePause();
-});
+window.addEventListener('keydown', e=>keys[e.key.toLowerCase()]=true);
 window.addEventListener('keyup', e=>keys[e.key.toLowerCase()]=false);
 
-// Game constants
+// Variables as per your request
 const WORLD_W = 5000, WORLD_H = 5000;
 const FRICTION =0.95,PLAYER_ACCEL = 1.5,AI_ACCEL = 1.5;
 const MAX_SPEED_PLAYER = 13, MAX_SPEED_AI = 10;
@@ -106,6 +98,7 @@ let camX=0, camY=0, spectating=null;
 const lastKiller = new Map();
 let _idCounter=0; function nextId(){ return ++_idCounter; }
 
+function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
 function rand(min,max){ return Math.random()*(max-min)+min; }
 function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
 function normalize(x,y){ const m=Math.hypot(x,y)||1; return [x/m, y/m]; }
@@ -193,7 +186,8 @@ class Projectile{
   draw(){ ctx.fillStyle=this.color; ctx.fillRect(this.x-camX-this.size/2,this.y-camY-this.size/2,this.size,this.size); }
 }
 
-// Respawn helper
+// Spawning, respawn, overlays, loop, etc. same as before
+// When respawning, reset score for everyone
 function findSafeSpawn(){
   for(let i=0;i<1000;i++){
     const x=rand(SPAWN_SAFE,WORLD_W-SPAWN_SAFE), y=rand(SPAWN_SAFE,WORLD_H-SPAWN_SAFE);
@@ -228,14 +222,6 @@ document.getElementById('btnRespawnNow').addEventListener('click',()=>{ if(mode=
 document.getElementById('btnExitDeath').addEventListener('click', exitToMenu);
 document.getElementById('btnExitVictory').addEventListener('click', exitToMenu);
 
-// Pause toggle
-function togglePause(){
-  if(!running) return;
-  paused = !paused;
-  if(paused){ pauseOverlay.classList.add('show'); }
-  else{ hideAllOverlays(); running=true; requestAnimationFrame(loop); }
-}
-
 function drawGrid(){
     ctx.fillStyle='#111'; ctx.fillRect(-camX,-camY,canvas.width,canvas.height);
     ctx.strokeStyle='#fff'; ctx.lineWidth=4; ctx.strokeRect(-camX,-camY,WORLD_W,WORLD_H);
@@ -250,7 +236,7 @@ function updateLeaderboard(){
 }
 
 function loop(){
-  if(!running || paused) return;
+  if(!running) return;
   ctx.clearRect(0,0,canvas.width,canvas.height);
   if(me && me.alive){ camX=me.x-canvas.width/2; camY=me.y-canvas.height/2; }
   drawGrid();
